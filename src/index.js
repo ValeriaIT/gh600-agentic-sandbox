@@ -46,7 +46,21 @@ function getUserData(userId) {
   };
 }
 
+/**
+ * Somma due importi monetari in modo sicuro convertendoli in centesimi.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+
+function safeSum(a, b) {
+  const centsA = Math.round(a * 100);
+  const centsB = Math.round(b * 100);
+  return (centsA + centsB) / 100;
+}
+
 module.exports = {
   calculateTotal,
   getUserData,
+  safeSum,
 };
