@@ -19,10 +19,7 @@ jobs:
 
       - name: Extract PR changes (git diff)
         run: |
-          # Extract only the diff of modified files compared to the target branch (main)
           git diff origin/${{ github.base_ref }}...HEAD > pr_changes.diff
-
-          # Show preview in workflow logs
           head -n 20 pr_changes.diff
 
       - name: Analyze code and run review
@@ -35,12 +32,14 @@ jobs:
             exit 0
           fi
 
+          gh extension install github/gh-copilot || true
+
           INSTRUCTIONS=""
           if [ -f .github/copilot-instructions.md ]; then
             INSTRUCTIONS=$(cat .github/copilot-instructions.md)
           fi
 
-          PROMPT="Perform a strict code review on the following git diff. Report any bugs or rule violations clearly.
+          PROMPT="Perform a strict code review on the following git diff. Report any bugs, SQL injections, or rule violations clearly.
 
           Repository Rules:
           $INSTRUCTIONS
@@ -48,11 +47,14 @@ jobs:
           PR Diff:
           $(cat pr_changes.diff)"
 
-          echo "Analyzing PR #${PR_NUMBER}..."
+          echo "Analyzing PR #${PR_NUMBER} with Copilot..."
+
+          REVIEW_OUTPUT=$(gh copilot explain "$PROMPT")
+          DIFF_LINES=$(wc -l < pr_changes.diff)
 
           gh pr comment $PR_NUMBER --body "🤖 **Copilot Code Review Report**
 
-          Automated analysis completed for PR #${PR_NUMBER}.
+          $REVIEW_OUTPUT
 
           ---
-          *Review performed automatically on $(wc -l < pr_changes.diff) lines of diff.*"
+          *Review performed automatically on $DIFF_LINES lines of diff.*"
