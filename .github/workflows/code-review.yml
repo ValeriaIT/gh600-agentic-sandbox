@@ -1,0 +1,58 @@
+name: Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract PR changes (git diff)
+        run: |
+          # Extract only the diff of modified files compared to the target branch (main)
+          git diff origin/${{ github.base_ref }}...HEAD > pr_changes.diff
+
+          # Show preview in workflow logs
+          head -n 20 pr_changes.diff
+
+      - name: Analyze code and run review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ ! -s pr_changes.diff ]; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          INSTRUCTIONS=""
+          if [ -f .github/copilot-instructions.md ]; then
+            INSTRUCTIONS=$(cat .github/copilot-instructions.md)
+          fi
+
+          PROMPT="Perform a strict code review on the following git diff. Report any bugs or rule violations clearly.
+
+          Repository Rules:
+          $INSTRUCTIONS
+
+          PR Diff:
+          $(cat pr_changes.diff)"
+
+          echo "Analyzing PR #${PR_NUMBER}..."
+
+          gh pr comment $PR_NUMBER --body "🤖 **Copilot Code Review Report**
+
+          Automated analysis completed for PR #${PR_NUMBER}.
+
+          ---
+          *Review performed automatically on $(wc -l < pr_changes.diff) lines of diff.*"

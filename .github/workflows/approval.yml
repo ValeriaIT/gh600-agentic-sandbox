@@ -1,0 +1,35 @@
+name: Approval
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  first-step:
+    name: First Message
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print initial message
+        run: |
+          echo "Starting the process..."
+          echo "Phase 1 completed successfully. Waiting for manual approval to continue."
+
+  approval-gate:
+    name: Waiting for Approval
+    needs: first-step
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Print approved message
+        run: |
+          echo "Approval received!"
+
+  final-step:
+    name: Final Message
+    needs: approval-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print completion message
+        run: |
+          echo "Phase 2 completed. Process finished successfully!"
