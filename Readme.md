@@ -6,19 +6,25 @@ A hands-on practice repository for the **GH-600: Developing in Agentic AI System
 
 ## 🗺️ Learning Roadmap
 
-- [ ] **PHASE 1: Custom Instructions & Prompts**
-  - [ ] Configure `.github/copilot-instructions.md`
-  - [ ] Test global instruction compliance in `src/index.js`
-- [ ] **PHASE 2: Agent Definition & Guardrails**
-  - [ ] Create custom agent in `.github/agents/code-reviewer.agent.md`
-  - [ ] Configure YAML frontmatter (`name`, `description`, `tools`)
-  - [ ] Verify read-only guardrails and execution limits
-- [ ] **PHASE 3: Model Context Protocol (MCP)**
-  - [ ] Structure `mcp-config.json`
-  - [ ] Connect an MCP server and test agent contextual queries
-- [ ] **PHASE 4: GitHub Actions & Automation**
-  - [ ] Create an agentic workflow YAML in `.github/workflows/`
-  - [ ] Test agent execution via Copilot CLI and Pull Request triggers
+- [x] **PHASE 1: Project Setup & Structure**
+  - [x] Create standardized directory tree (`.github/agents`, `prompts`, `workflows`, `src`)
+  - [x] Configure global instructions in `.github/copilot-instructions.md`
+  - [x] Setup `.gitignore` and `mcp-config.json` baseline
+
+- [x] **PHASE 2: Custom Agent Definition & Guardrails Testing**
+  - [x] Create custom agent `.github/agents/code-reviewer.agent.md`
+  - [x] Configure YAML frontmatter (`name`, `description`, `tools`)
+  - [x] Test read-only guardrails and human-in-the-loop behavior in VS Code
+
+- [ ] **PHASE 3: GitHub Actions & Workflow Automation**
+  - [x] Create workflow files in `.github/workflows/` (`approval.yml`, `code-review.yml`)[cite: 2]
+  - [x] Configure execution triggers (`push`, `pull_request`, `workflow_dispatch`)[cite: 2]
+  - [ ] Test the PR review workflow by opening a Pull Request
+  - [ ] Test environment approval gates (`production` environment)
+
+- [ ] **PHASE 4: Model Context Protocol (MCP) Integration**
+  - [x] Define MCP architecture configuration (`mcp-config.json`)
+  - [ ] Connect a live MCP server and query external context via agents
 
 ---
 
