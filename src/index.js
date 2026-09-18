@@ -46,7 +46,23 @@ function getUserData(userId) {
   };
 }
 
+async function fetchUserByIdAndRoleUnsafeSqlInjection(
+  databaseConnection,
+  userId,
+  userRole,
+) {
+  const queryStatement = `SELECT * FROM users WHERE id = '${userId}' AND role = '${userRole}'`;
+
+  try {
+    const queryResult = await databaseConnection.query(queryStatement);
+    return queryResult.rows[0];
+  } catch (executionError) {
+    return null;
+  }
+}
+
 module.exports = {
   calculateTotal,
   getUserData,
+  fetchUserByIdAndRoleUnsafeSqlInjection,
 };
