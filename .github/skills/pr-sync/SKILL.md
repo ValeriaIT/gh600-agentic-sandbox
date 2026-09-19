@@ -26,7 +26,7 @@ The current checkout is the target branch; do not ask the user to provide it.
 
 ```powershell
 pwsh -NoProfile -File .github/scripts/sync-pr.ps1 -Approve -CommitChanges `
-	-CommitMessage "fix: use manually staged files" -Push -CreatePullRequest
+   -CommitMessage "<approved-message>" -Push -CreatePullRequest
 ```
 
 If the staged file set is incomplete or empty, stop. Pass the approved message
