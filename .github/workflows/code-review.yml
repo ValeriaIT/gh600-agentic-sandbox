@@ -47,7 +47,12 @@ jobs:
 
           echo "Analyzing PR #${PR_NUMBER} with Copilot..."
 
-          REVIEW_OUTPUT=$(copilot --prompt "$PROMPT")
+          REVIEW_OUTPUT="Copilot CLI unavailable in this runner; automated review skipped."
+
+          if command -v copilot >/dev/null 2>&1; then
+            REVIEW_OUTPUT=$(copilot --prompt "$PROMPT" 2>/tmp/copilot_review.err || echo "Copilot CLI failed: $(cat /tmp/copilot_review.err 2>/dev/null)")
+          fi
+
           DIFF_LINES=$(wc -l < pr_changes.diff)
 
           gh pr comment $PR_NUMBER --body "🤖 **Copilot Code Review Report**
