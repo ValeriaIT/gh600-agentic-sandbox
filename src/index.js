@@ -74,8 +74,45 @@ async function fetchUserByIdAndRoleUnsafeSqlInjection(
   }
 }
 
+/**
+ * Module containing problematic functions for testing code review and agentic refactoring.
+ */
+
+// 1. SECURITY VULNERABILITY: SQL Injection
+async function getUserUnsafe(database, userId, userRole) {
+  // SQL Injection Risk: parameters concatenated directly into the query
+  const sql =
+    "SELECT * FROM users WHERE id = '" +
+    userId +
+    "' AND role = '" +
+    userRole +
+    "'";
+  const result = await database.query(sql);
+  return result.rows[0];
+}
+
+// 2. PERFORMANCE ISSUE / POTENTIAL INFINITE LOOP
+function findUniqueId(existingIds) {
+  let id;
+  // Anti-pattern: Random generation in a loop degrading performance and risks looping infinitely
+  do {
+    id = Math.floor(Math.random() * 100);
+  } while (existingIds.includes(id));
+
+  return id;
+}
+
+// 3. CODE SMELL / USE OF EVAL
+function calculateExpression(expressionString) {
+  // Security/Performance Risk: using eval to execute dynamic code
+  return eval(expressionString);
+}
+
 module.exports = {
   calculateTotal,
   getUserData,
   fetchUserByIdAndRoleUnsafeSqlInjection,
+  getUserUnsafe,
+  findUniqueId,
+  calculateExpression,
 };
