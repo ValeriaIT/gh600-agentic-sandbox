@@ -51,10 +51,23 @@ async function fetchUserByIdAndRoleUnsafeSqlInjection(
   userId,
   userRole,
 ) {
-  const queryStatement = `SELECT * FROM users WHERE id = '${userId}' AND role = '${userRole}'`;
+  if (
+    typeof userId !== "string" ||
+    userId.trim().length === 0 ||
+    typeof userRole !== "string" ||
+    userRole.trim().length === 0
+  ) {
+    throw new TypeError("userId and userRole must be non-empty strings");
+  }
+
+  const queryStatement = "SELECT * FROM users WHERE id = $1 AND role = $2";
+  const queryParameters = [userId, userRole];
 
   try {
-    const queryResult = await databaseConnection.query(queryStatement);
+    const queryResult = await databaseConnection.query(
+      queryStatement,
+      queryParameters,
+    );
     return queryResult.rows[0];
   } catch (executionError) {
     return null;

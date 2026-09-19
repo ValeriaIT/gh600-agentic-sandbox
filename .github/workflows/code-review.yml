@@ -32,8 +32,6 @@ jobs:
             exit 0
           fi
 
-          gh extension install github/gh-copilot || true
-
           INSTRUCTIONS=""
           if [ -f .github/copilot-instructions.md ]; then
             INSTRUCTIONS=$(cat .github/copilot-instructions.md)
@@ -49,7 +47,7 @@ jobs:
 
           echo "Analyzing PR #${PR_NUMBER} with Copilot..."
 
-          REVIEW_OUTPUT=$(gh copilot explain "$PROMPT")
+          REVIEW_OUTPUT=$(copilot --prompt "$PROMPT")
           DIFF_LINES=$(wc -l < pr_changes.diff)
 
           gh pr comment $PR_NUMBER --body "🤖 **Copilot Code Review Report**
