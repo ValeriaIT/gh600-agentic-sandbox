@@ -26,6 +26,22 @@ A hands-on practice repository for the **GH-600: Developing in Agentic AI System
   - [x] Define MCP architecture configuration (`mcp-config.json`)
   - [ ] Connect a live MCP server and query external context via agents
 
+## Agents and Skills
+
+### Agents
+
+| Name            | Use                                                 | Invocation                                 |
+| --------------- | --------------------------------------------------- | ------------------------------------------ |
+| `code-reviewer` | Read-only security, quality, and performance review | Select `code-reviewer` in the Agent picker |
+| `pr-fixer`      | Analyze and address Pull Request feedback           | Select `pr-fixer` in the Agent picker      |
+| `unit-tester`   | Create or update tests only in `test/`              | Select `unit-tester` in the Agent picker   |
+
+### Skill
+
+| Name      | Use                                                                     | Invocation                                                      |
+| --------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `pr-sync` | Sync the current branch with `main`, commit, push, or create a draft PR | Type `/pr-sync` or describe the requested PR sync in Agent mode |
+
 ---
 
 ## 📋 Notes & Practice Logs

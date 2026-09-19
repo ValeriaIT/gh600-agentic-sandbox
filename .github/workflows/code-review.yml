@@ -2,14 +2,55 @@ name: Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
 
 jobs:
-  review:
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --runInBand
+
+  codeql:
+    name: CodeQL security analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript
+
+  policy:
+    name: Repository security policy
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -17,47 +58,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract PR changes (git diff)
-        run: |
-          git diff origin/${{ github.base_ref }}...HEAD > pr_changes.diff
-          head -n 20 pr_changes.diff
+      - name: Extract PR changes
+        run: git diff --unified=0 "origin/${{ github.base_ref }}...HEAD" > pr_changes.diff
 
-      - name: Analyze code and run review
+      - name: Reject known unsafe patterns
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [ ! -s pr_changes.diff ]; then
-            echo "No changes detected."
-            exit 0
+          set -euo pipefail
+
+          findings=""
+          eval_token='eval'
+          open_paren='('
+          select_token='SELECT'
+          plus_token='\+'
+          parameter_token='\$\{'
+
+          if grep -nE "^\+.*${eval_token}[[:space:]]*\\${open_paren}" pr_changes.diff; then
+            findings+="- CRITICAL: dynamic eval detected in the PR diff.\n"
           fi
 
-          INSTRUCTIONS=""
-          if [ -f .github/copilot-instructions.md ]; then
-            INSTRUCTIONS=$(cat .github/copilot-instructions.md)
+          if grep -nE "^\+.*${select_token}.*${plus_token}|^\+.*${select_token}.*${parameter_token}" pr_changes.diff; then
+            findings+="- CRITICAL: SQL query appears to concatenate untrusted input; use parameters.\n"
           fi
 
-          PROMPT="Perform a strict code review on the following git diff. Report any bugs, SQL injections, or rule violations clearly.
-
-          Repository Rules:
-          $INSTRUCTIONS
-
-          PR Diff:
-          $(cat pr_changes.diff)"
-
-          echo "Analyzing PR #${PR_NUMBER} with Copilot..."
-
-          REVIEW_OUTPUT="Copilot CLI unavailable in this runner; automated review skipped."
-
-          if command -v copilot >/dev/null 2>&1; then
-            REVIEW_OUTPUT=$(copilot --prompt "$PROMPT" 2>/tmp/copilot_review.err || echo "Copilot CLI failed: $(cat /tmp/copilot_review.err 2>/dev/null)")
+          if [ -n "$findings" ]; then
+            printf 'Security findings:\n%b' "$findings"
+            gh pr comment "$PR_NUMBER" --body "## Automated security review\n\n${findings}\nThe check failed. Fix the findings before merging."
+            exit 1
           fi
 
-          DIFF_LINES=$(wc -l < pr_changes.diff)
-
-          gh pr comment $PR_NUMBER --body "🤖 **Copilot Code Review Report**
-
-          $REVIEW_OUTPUT
-
-          ---
-          *Review performed automatically on $DIFF_LINES lines of diff.*"
+          echo "No repository policy violations detected in the PR diff."
