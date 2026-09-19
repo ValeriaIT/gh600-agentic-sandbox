@@ -69,12 +69,17 @@ jobs:
           set -euo pipefail
 
           findings=""
+          eval_token='eval'
+          open_paren='('
+          select_token='SELECT'
+          plus_token='\+'
+          parameter_token='\$\{'
 
-          if grep -nE '^\+.*eval[[:space:]]*\(' pr_changes.diff; then
+          if grep -nE "^\+.*${eval_token}[[:space:]]*\\${open_paren}" pr_changes.diff; then
             findings+="- CRITICAL: dynamic eval detected in the PR diff.\n"
           fi
 
-          if grep -nE '^\+.*SELECT.*\+|^\+.*SELECT.*\$\{' pr_changes.diff; then
+          if grep -nE "^\+.*${select_token}.*${plus_token}|^\+.*${select_token}.*${parameter_token}" pr_changes.diff; then
             findings+="- CRITICAL: SQL query appears to concatenate untrusted input; use parameters.\n"
           fi
 
