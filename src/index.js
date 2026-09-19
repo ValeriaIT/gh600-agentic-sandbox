@@ -78,16 +78,23 @@ async function fetchUserByIdAndRoleUnsafeSqlInjection(
  * Module containing problematic functions for testing code review and agentic refactoring.
  */
 
-// 1. SECURITY VULNERABILITY: SQL Injection
+// 1. Parameterized user lookup
 async function getUserUnsafe(database, userId, userRole) {
-  // SQL Injection Risk: parameters concatenated directly into the query
-  const sql =
-    "SELECT * FROM users WHERE id = '" +
-    userId +
-    "' AND role = '" +
-    userRole +
-    "'";
-  const result = await database.query(sql);
+  if (
+    !database ||
+    typeof database.query !== "function" ||
+    typeof userId !== "string" ||
+    userId.trim().length === 0 ||
+    typeof userRole !== "string" ||
+    userRole.trim().length === 0
+  ) {
+    throw new TypeError("database, userId, and userRole are required");
+  }
+
+  const result = await database.query(
+    "SELECT * FROM users WHERE id = $1 AND role = $2",
+    [userId, userRole],
+  );
   return result.rows[0];
 }
 
@@ -102,10 +109,61 @@ function findUniqueId(existingIds) {
   return id;
 }
 
-// 3. CODE SMELL / USE OF EVAL
+// 3. Safe arithmetic expression evaluation
 function calculateExpression(expressionString) {
-  // Security/Performance Risk: using eval to execute dynamic code
-  return eval(expressionString);
+  if (typeof expressionString !== "string" || expressionString.trim() === "") {
+    throw new TypeError("expressionString must be a non-empty string");
+  }
+
+  const tokens = expressionString.match(/\d+(?:\.\d+)?|[()+\-*/]/g);
+  if (!tokens || tokens.join("") !== expressionString.replace(/\s+/g, "")) {
+    throw new SyntaxError("expression contains unsupported characters");
+  }
+
+  let position = 0;
+  function parseExpression() {
+    let value = parseTerm();
+    while (tokens[position] === "+" || tokens[position] === "-") {
+      const operator = tokens[position++];
+      const right = parseTerm();
+      value = operator === "+" ? value + right : value - right;
+    }
+    return value;
+  }
+
+  function parseTerm() {
+    let value = parseFactor();
+    while (tokens[position] === "*" || tokens[position] === "/") {
+      const operator = tokens[position++];
+      const right = parseFactor();
+      if (operator === "/" && right === 0) {
+        throw new RangeError("cannot divide by zero");
+      }
+      value = operator === "*" ? value * right : value / right;
+    }
+    return value;
+  }
+
+  function parseFactor() {
+    const token = tokens[position++];
+    if (token === "(") {
+      const value = parseExpression();
+      if (tokens[position++] !== ")") {
+        throw new SyntaxError("missing closing parenthesis");
+      }
+      return value;
+    }
+    if (!token || Number.isNaN(Number(token))) {
+      throw new SyntaxError("invalid arithmetic expression");
+    }
+    return Number(token);
+  }
+
+  const result = parseExpression();
+  if (position !== tokens.length || !Number.isFinite(result)) {
+    throw new SyntaxError("invalid arithmetic expression");
+  }
+  return result;
 }
 
 module.exports = {
