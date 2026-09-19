@@ -1,4 +1,8 @@
-const { calculateTotal, getUserData } = require("../src/index.js");
+const {
+  calculateTotal,
+  getUserData,
+  fetchUserByIdAndRoleUnsafeSqlInjection,
+} = require("../src/index.js");
 
 describe("calculateTotal", () => {
   test("calculates the total for multiple items", () => {
@@ -44,6 +48,40 @@ describe("calculateTotal", () => {
   ])("throws when an item has an invalid price: %p", (item) => {
     expect(() => calculateTotal([item])).toThrow(
       new TypeError("each item must have a finite numeric price"),
+    );
+  });
+});
+
+describe("fetchUserByIdAndRoleUnsafeSqlInjection", () => {
+  test("uses parameterized SQL and validates inputs", async () => {
+    const query = jest
+      .fn()
+      .mockResolvedValue({ rows: [{ id: 42, role: "admin" }] });
+    const db = { query };
+
+    await expect(
+      fetchUserByIdAndRoleUnsafeSqlInjection(db, "42", "admin"),
+    ).resolves.toEqual({ id: 42, role: "admin" });
+
+    expect(query).toHaveBeenCalledWith(
+      "SELECT * FROM users WHERE id = $1 AND role = $2",
+      ["42", "admin"],
+    );
+  });
+
+  test("throws for invalid userId or userRole", async () => {
+    const db = { query: jest.fn() };
+
+    await expect(
+      fetchUserByIdAndRoleUnsafeSqlInjection(db, "", "admin"),
+    ).rejects.toThrow(
+      new TypeError("userId and userRole must be non-empty strings"),
+    );
+
+    await expect(
+      fetchUserByIdAndRoleUnsafeSqlInjection(db, "42", ""),
+    ).rejects.toThrow(
+      new TypeError("userId and userRole must be non-empty strings"),
     );
   });
 });

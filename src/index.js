@@ -46,21 +46,36 @@ function getUserData(userId) {
   };
 }
 
-/**
- * Somma due importi monetari in modo sicuro convertendoli in centesimi.
- * @param {number} a
- * @param {number} b
- * @returns {number}
- */
+async function fetchUserByIdAndRoleUnsafeSqlInjection(
+  databaseConnection,
+  userId,
+  userRole,
+) {
+  if (
+    typeof userId !== "string" ||
+    userId.trim().length === 0 ||
+    typeof userRole !== "string" ||
+    userRole.trim().length === 0
+  ) {
+    throw new TypeError("userId and userRole must be non-empty strings");
+  }
 
-function safeSum(a, b) {
-  const centsA = Math.round(a * 100);
-  const centsB = Math.round(b * 100);
-  return (centsA + centsB) / 100;
+  const queryStatement = "SELECT * FROM users WHERE id = $1 AND role = $2";
+  const queryParameters = [userId, userRole];
+
+  try {
+    const queryResult = await databaseConnection.query(
+      queryStatement,
+      queryParameters,
+    );
+    return queryResult.rows[0];
+  } catch (executionError) {
+    return null;
+  }
 }
 
 module.exports = {
   calculateTotal,
   getUserData,
-  safeSum,
+  fetchUserByIdAndRoleUnsafeSqlInjection,
 };
