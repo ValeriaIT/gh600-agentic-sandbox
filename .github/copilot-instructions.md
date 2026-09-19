@@ -11,6 +11,9 @@
 - NEVER commit secrets, API keys, or plain-text passwords.
 - Always validate input arguments in exported functions.
 - Do NOT modify configuration files unless explicitly asked.
+- Keep `Readme.md` concise: include only essential project information, usage,
+  and prerequisites. Do not duplicate detailed workflow instructions or
+  internal agent and skill rules there.
 
 # Code Review Guidelines
 

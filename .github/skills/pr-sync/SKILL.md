@@ -11,14 +11,26 @@ The current checkout is the target branch; do not ask the user to provide it.
 ## Workflow
 
 1. Check the current branch and `git status --short`.
-2. Explain the requested operation and get approval before using `-Approve`.
-3. Run only the requested switches:
+2. List all modified and untracked files and ask whether they are the complete
+   set the user wants in the commit.
+3. Stop and ask the user to stage the approved files manually with `git add`.
+   Never run `git add` or stage files automatically.
+4. Check the staged file list with `git diff --cached --name-only`. If no files
+   are staged, tell the user clearly and stop before commit, push, or PR creation.
+5. Inspect the staged changes and propose a short commit message before
+   committing.
+   Use a concise single-line summary and keep it within 72 characters.
+6. Show the proposed message and wait for explicit approval.
+7. Explain the requested operation and get approval before using `-Approve`.
+8. Run only the requested switches:
 
 ```powershell
-pwsh -NoProfile -File .github/scripts/sync-pr.ps1 -Approve -CommitChanges -Push -CreatePullRequest
+pwsh -NoProfile -File .github/scripts/sync-pr.ps1 -Approve -CommitChanges `
+	-CommitMessage "fix: use manually staged files" -Push -CreatePullRequest
 ```
 
-Use `-IncludeUntracked` only when explicitly requested. Ask for a commit message only when the default is not acceptable.
+If the staged file set is incomplete or empty, stop. Pass the approved message
+with `-CommitMessage` whenever changes are committed.
 
 ## Guardrails
 

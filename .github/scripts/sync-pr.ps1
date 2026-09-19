@@ -5,7 +5,6 @@ param (
     [string]$Remote = "origin",
     [switch]$Approve,
     [switch]$CommitChanges,
-    [switch]$IncludeUntracked,
     [switch]$Push,
     [switch]$CreatePullRequest
 )
@@ -78,22 +77,23 @@ if ([int]$behindCount -gt 0) {
 }
 
 if ($CommitChanges -and $hasChanges) {
-    if ($IncludeUntracked) {
-        Invoke-Git @("add", "--all")
+    if ([string]::IsNullOrWhiteSpace($CommitMessage)) {
+        throw "-CommitMessage is required when -CommitChanges is specified."
     }
-    else {
-        Invoke-Git @("add", "--update")
+
+    if ($CommitMessage.Length -gt 72) {
+        throw "Commit message must be 72 characters or fewer."
+    }
+
+    if ($CommitMessage.Contains("`r") -or $CommitMessage.Contains("`n")) {
+        throw "Commit message must be a single line."
     }
 
     & git diff --staged --quiet
     if ($LASTEXITCODE -eq 0) {
-        Write-Output "No tracked changes are staged; skipping commit."
+        throw "No files are staged. Review the changes and stage the approved files manually before rerunning."
     }
     else {
-        if ([string]::IsNullOrWhiteSpace($CommitMessage)) {
-            $CommitMessage = "chore($currentBranch): sync with $BaseBranch"
-        }
-
         Invoke-Git @("commit", "-m", $CommitMessage)
     }
 }

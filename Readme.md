@@ -42,8 +42,6 @@ A hands-on practice repository for the **GH-600: Developing in Agentic AI System
 | --------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `pr-sync` | Sync the current branch with `main`, commit, push, or create a draft PR | Type `/pr-sync` or describe the requested PR sync in Agent mode |
 
-Prerequisites: install `git` and `gh`, then authenticate with `gh auth login`.
-
 ---
 
 ## 📋 Notes & Practice Logs
